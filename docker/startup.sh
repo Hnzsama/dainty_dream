@@ -14,14 +14,20 @@ if [ "${DB_CONNECTION}" = "sqlite" ] || [ -z "${DB_CONNECTION}" ]; then
     chown -R www-data:www-data /var/www/html/database
 fi
 
+# Generate app key if not set in environment or .env
+if [ -z "${APP_KEY}" ] && ! grep -q "^APP_KEY=base64:" .env; then
+    echo "APP_KEY is not set. Generating key..."
+    php artisan key:generate --force
+fi
+
 # Run migrations and optimize Laravel
 echo "Caching Laravel configuration, routes, and views..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-echo "Running migrations..."
-php artisan migrate --force
+echo "Running migrations and seeding database..."
+php artisan migrate --force --seed
 
 # Start Nginx in background
 echo "Starting Nginx..."
